@@ -1,0 +1,252 @@
+import React, { useState, useEffect } from "react";
+import { Container, Card, Button, Row, Col } from "react-bootstrap";
+import Encrypt from "./Encrypt";
+import Decrypt from "./Decrypt";
+import Logs from "./Logs";
+import Inbox from "./Inbox";
+import { Route, Routes, Link, NavLink } from "react-router-dom";
+import { Lock, Unlock, Inbox as InboxIcon, FileText, Home, Shield, Mail, Activity } from "lucide-react";
+import { api } from "../lib/api";
+
+const Overview = () => {
+  const [stats, setStats] = useState({ totalMessages: 0, newMessages: 0 });
+  const [username, setUsername] = useState('');
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const me = await api.get('/auth/me');
+        setUsername(me.data.user.username);
+        const res = await api.get('/messages/inbox?mine=true');
+        const messages = res.data.items || [];
+        setStats({
+          totalMessages: messages.length,
+          newMessages: messages.filter(m => !m.decrypted).length
+        });
+      } catch (e) {
+        console.error('Failed to fetch stats');
+      }
+    };
+    fetchStats();
+  }, []);
+
+  return (
+    <div className="overview-page">
+      <div className="page-header mb-4">
+        <div className="d-flex align-items-center">
+          <div className="header-icon">
+            <Home size={32} />
+          </div>
+          <div>
+            <h2 className="mb-1">Welcome back, Dr. {username}</h2>
+            <p className="text-muted mb-0">
+              Secure steganography-based patient data exchange dashboard
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <Row className="g-4 mb-4">
+        <Col md={6} lg={3}>
+          <Card className="stat-card stat-card-primary">
+            <Card.Body>
+              <div className="d-flex justify-content-between align-items-start">
+                <div>
+                  <p className="stat-label">Total Messages</p>
+                  <h2 className="stat-value">{stats.totalMessages}</h2>
+                </div>
+                <div className="stat-icon stat-icon-primary">
+                  <Mail size={24} />
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={6} lg={3}>
+          <Card className="stat-card stat-card-info">
+            <Card.Body>
+              <div className="d-flex justify-content-between align-items-start">
+                <div>
+                  <p className="stat-label">New Messages</p>
+                  <h2 className="stat-value">{stats.newMessages}</h2>
+                </div>
+                <div className="stat-icon stat-icon-info">
+                  <InboxIcon size={24} />
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={6} lg={3}>
+          <Card className="stat-card stat-card-success">
+            <Card.Body>
+              <div className="d-flex justify-content-between align-items-start">
+                <div>
+                  <p className="stat-label">Security Status</p>
+                  <h2 className="stat-value">Active</h2>
+                </div>
+                <div className="stat-icon stat-icon-success">
+                  <Shield size={24} />
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col md={6} lg={3}>
+          <Card className="stat-card stat-card-warning">
+            <Card.Body>
+              <div className="d-flex justify-content-between align-items-start">
+                <div>
+                  <p className="stat-label">Encryption</p>
+                  <h2 className="stat-value">LSB</h2>
+                </div>
+                <div className="stat-icon stat-icon-warning">
+                  <Activity size={24} />
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row className="g-4">
+        <Col lg={8}>
+          <Card className="shadow-sm border-0 h-100">
+            <Card.Body className="p-4">
+              <h4 className="mb-3">Quick Actions</h4>
+              <p className="text-muted mb-4">
+                Secure, steganography-powered sharing of patient data within your hospital network. 
+                Encrypt confidential information into images (PNG/JPEG) or audio (WAV) files, send to colleague doctors, and decrypt on receipt.
+              </p>
+              
+              <div className="quick-actions">
+                <Button 
+                  as={Link} 
+                  to="/dashboard/encrypt" 
+                  size="lg"
+                  className="action-btn action-btn-primary me-3 mb-3"
+                >
+                  <Lock size={20} className="me-2" />
+                  Encrypt & Send Message
+                </Button>
+                <Button 
+                  variant="outline-primary" 
+                  as={Link} 
+                  to="/dashboard/inbox"
+                  size="lg"
+                  className="action-btn mb-3"
+                >
+                  <InboxIcon size={20} className="me-2" />
+                  View Inbox ({stats.newMessages} new)
+                </Button>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col lg={4}>
+          <Card className="shadow-sm border-0 h-100 feature-card-overview">
+            <Card.Body className="p-4">
+              <h5 className="mb-3">Security Features</h5>
+              <ul className="feature-list">
+                <li>
+                  <Shield size={18} className="me-2 text-primary" />
+                  <div>
+                    <strong>LSB Steganography</strong>
+                    <p className="mb-0 small text-muted">Hide data in image/audio files</p>
+                  </div>
+                </li>
+                <li>
+                  <Lock size={18} className="me-2 text-primary" />
+                  <div>
+                    <strong>Fernet Encryption</strong>
+                    <p className="mb-0 small text-muted">Military-grade data encryption</p>
+                  </div>
+                </li>
+                <li>
+                  <Activity size={18} className="me-2 text-primary" />
+                  <div>
+                    <strong>Real-time Notifications</strong>
+                    <p className="mb-0 small text-muted">Instant message alerts via WebSocket</p>
+                  </div>
+                </li>
+                <li>
+                  <FileText size={18} className="me-2 text-primary" />
+                  <div>
+                    <strong>Complete Audit Trail</strong>
+                    <p className="mb-0 small text-muted">Track all encryption activities</p>
+                  </div>
+                </li>
+              </ul>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+const Dashboard = () => {
+  const [role, setRole] = useState('doctor');
+  useEffect(() => {
+    (async () => {
+      try {
+        const me = await api.get('/auth/me');
+        setRole(me.data.user.role);
+      } catch {}
+    })();
+  }, []);
+
+  return (
+    <div className="app-layout">
+      <aside className="app-sidebar">
+        <ul className="sidebar-nav">
+          <li className="sidebar-nav-item">
+            <NavLink to="/dashboard" end className="sidebar-nav-link">
+              <Home /> Overview
+            </NavLink>
+          </li>
+          <li className="sidebar-nav-item">
+            <NavLink to="/dashboard/encrypt" className="sidebar-nav-link">
+              <Lock /> Encrypt
+            </NavLink>
+          </li>
+          <li className="sidebar-nav-item">
+            <NavLink to="/dashboard/decrypt" className="sidebar-nav-link">
+              <Unlock /> Decrypt
+            </NavLink>
+          </li>
+          <li className="sidebar-nav-item">
+            <NavLink to="/dashboard/inbox" className="sidebar-nav-link">
+              <InboxIcon /> Inbox
+            </NavLink>
+          </li>
+          {role === "admin" && (
+            <li className="sidebar-nav-item">
+              <NavLink to="/dashboard/logs" className="sidebar-nav-link">
+                <FileText /> Logs
+              </NavLink>
+            </li>
+          )}
+        </ul>
+      </aside>
+      <main className="app-main">
+        <Container fluid>
+          <Routes>
+            <Route index element={<Overview />} />
+            <Route path="encrypt" element={<Encrypt />} />
+            <Route path="decrypt" element={<Decrypt />} />
+            <Route path="inbox" element={<Inbox />} />
+            <Route path="logs" element={<Logs />} />
+          </Routes>
+        </Container>
+      </main>
+    </div>
+  );
+};
+
+export default Dashboard;
+
