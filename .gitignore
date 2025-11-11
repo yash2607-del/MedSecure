@@ -16,3 +16,19 @@ yarn.lock
 __pycache__/
 *.pyc
 temp/
+\n# Additional ignores
+.venv/
+logs/
+dist-ssr/
+build/
+Thumbs.db
+*.swp
+*.swo
+*.pyo
+*.pyd
+.eslintcache
+.npmrc
+*.env.local
+*.env.development.local
+*.env.test.local
+*.env.production.local
