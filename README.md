@@ -70,14 +70,31 @@ Frontend (`frontend/.env`)
 
 ## Data Flow
 
-1. Frontend sends request to Node API with credentials cookie
-2. Node validates session and, for encrypt/decrypt, calls the Python stego-service
-3. Python returns cipher_text/decrypted payload to Node
-4. Node stores/retrieves message metadata and audit logs in MongoDB
-5. Frontend displays inbox items and decrypted results
-- Flask and React documentation
-- LSB Steganography research papers
-- Bootstrap and Lucide icon libraries
+Doctor-to-doctor journey (what happens when a doctor sends a secure message to another doctor):
+
+1) 👩‍⚕️ Doctor A (Sender)
+- Uploads a cover file (🖼️ Image or 🎵 Audio)
+- Enters patient_id, patient_name, and a confidential message
+- Chooses the recipient doctor and clicks Encrypt & Send
+
+2) 🛡️ Platform Processing
+- The platform encrypts the patient data and binds it to the cover file
+- A secure message record is created and an audit entry is written
+
+3) 📨 Doctor B (Recipient)
+- Sees a new item in Inbox with sender and timestamp
+- Clicks Decrypt to view the patient details in a structured modal
+
+4) 🧾 Audit Trail
+- Registration, login, send, and decrypt actions are recorded for compliance
+
+Quick view with table emoji formatting:
+
+| 🧑‍⚕️ From | 🔄 Step | 🧑‍⚕️ To |
+|---|---|---|
+| 👩‍⚕️ Doctor A | Uploads cover (🖼️/🎵), enters patient data | 🛡️ Platform |
+| 🛡️ Platform | Encrypts, binds, logs audit | 🧑‍⚕️ Doctor B |
+| 🧑‍⚕️ Doctor B | Decrypts and views structured details | 👨‍⚕️ Doctor B |
 
 ---
 
