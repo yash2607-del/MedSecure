@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { api } from "../lib/api";
-import { Card, Table, Button, Badge, Alert } from "react-bootstrap";
+import { Card, Table, Button, Alert } from "react-bootstrap";
 import { toast } from "react-toastify";
 import { Inbox as InboxIcon, Mail, MailOpen, RefreshCw, ExternalLink, Unlock } from "lucide-react";
 import PayloadModal from "../components/PayloadModal";
@@ -90,7 +90,8 @@ const Inbox = () => {
                     <th>Status</th>
                     <th>From Doctor</th>
                     <th>Patient ID</th>
-                    <th>Steganographic File</th>
+                    <th>Encrypted Text</th>
+                    <th>Encrypted File</th>
                     <th>Received</th>
                     <th className="text-end">Action</th>
                   </tr>
@@ -112,15 +113,26 @@ const Inbox = () => {
                         <code className="patient-id-badge">{m.patient_id || "-"}</code>
                       </td>
                       <td>
-                        <a 
-                          href={m.file_url} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="file-link"
-                        >
-                          <ExternalLink size={16} className="me-1" />
-                          View File
-                        </a>
+                        <code className="text-muted small">{(m.cipher_text || '').slice(0, 40)}{(m.cipher_text || '').length>40?'…':''}</code>
+                      </td>
+                      <td>
+                        <Button size="sm" variant="outline-primary" onClick={async ()=>{
+                          try {
+                            const fileRes = await api.get(`/messages/${m._id}/file`, { responseType: 'blob' });
+                            const blob = new Blob([fileRes.data], { type: fileRes.headers['content-type'] || 'application/octet-stream' });
+                            const url = URL.createObjectURL(blob);
+                            const disposition = fileRes.headers['content-disposition'] || '';
+                            const match = disposition.match(/filename="(.+?)"/i);
+                            const name = match ? match[1] : 'message.enc';
+                            const a = document.createElement('a');
+                            a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+                            setTimeout(()=> URL.revokeObjectURL(url), 1500);
+                          } catch (e) {
+                            toast.error('No encrypted file available');
+                          }
+                        }}>
+                          <ExternalLink size={16} className="me-1" /> Download
+                        </Button>
                       </td>
                       <td>
                         <small className="text-muted">

@@ -189,6 +189,20 @@ body {
   font-weight: bold;
 }
 
+/* Ensure proper bullets for explicitly marked lists on auth pages */
+.auth-welcome-content ul.feature-list {
+  list-style: disc;
+  list-style-position: outside;
+  padding-left: 1.25rem;
+  margin-top: 2rem;
+}
+.auth-welcome-content ul.feature-list li {
+  display: list-item; /* override flex to render bullets */
+}
+.auth-welcome-content ul.feature-list li::before {
+  content: none; /* disable custom checkmark for feature-list */
+}
+
 .auth-form-panel {
   flex: 1;
   display: flex;

@@ -10,13 +10,14 @@ import { api } from "../lib/api";
 
 const Overview = () => {
   const [stats, setStats] = useState({ totalMessages: 0, newMessages: 0 });
-  const [username, setUsername] = useState('');
+  const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const me = await api.get('/auth/me');
-        setUsername(me.data.user.username);
+        const dn = me.data.user.displayName || me.data.user.username;
+        setDisplayName(dn);
         const res = await api.get('/messages/inbox?mine=true');
         const messages = res.data.items || [];
         setStats({
@@ -38,7 +39,7 @@ const Overview = () => {
             <Home size={32} />
           </div>
           <div>
-            <h2 className="mb-1">Welcome back, Dr. {username}</h2>
+            <h2 className="mb-1">Welcome back, Dr. {displayName}</h2>
             <p className="text-muted mb-0">
               Secure steganography-based patient data exchange dashboard
             </p>

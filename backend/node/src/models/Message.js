@@ -9,6 +9,12 @@ const messageSchema = new mongoose.Schema({
   data_summary: { type: String },
   file_url: { type: String },
   cipher_text: { type: String, required: true },
+  mono_cipher: { type: String },
+  packagedFile: {
+    b64: { type: String },
+    mime: { type: String, default: 'application/octet-stream' },
+    filename: { type: String, default: '' }
+  },
   decrypted: { type: Boolean, default: false },
   decrypted_at: { type: Date },
   notes: { type: String }

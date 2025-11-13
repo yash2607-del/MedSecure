@@ -4,7 +4,7 @@ Secure medical data exchange using steganography and encryption. Doctors can emb
 
 ## Tech Stack
 
-- Backend (API): Node.js, Express, MongoDB (Mongoose), JWT (cookie-based), Helmet, CORS, Cookie-Parser
+- Backend: Node.js, Express, MongoDB (Mongoose), JWT (cookie-based), Helmet, CORS, Cookie-Parser
 - Stego Service: Python, Flask, cryptography (Fernet)
 - Frontend: React, Vite, React Router, Axios, React-Bootstrap, Toast notifications
 
@@ -20,7 +20,7 @@ Secure medical data exchange using steganography and encryption. Doctors can emb
 
 ## How to Run
 
-Prerequisites: Node.js, Python 3, and MongoDB connection (Atlas or local)
+Prerequisites: Node.js, Python, and MongoDB connection (Atlas)
 
 1) Backend API (Node)
 - Path: `backend/node`
@@ -48,25 +48,6 @@ Prerequisites: Node.js, Python 3, and MongoDB connection (Atlas or local)
   - npm install
   - npm run dev
 
-## Env Files
-
-Backend API (`backend/node/.env`)
-- PORT=4000
-- MONGO_URI=your_mongodb_connection_string
-- MONGO_DB=MedSecure
-- JWT_SECRET=your_jwt_secret
-- COOKIE_NAME=med_token
-- COOKIE_SECURE=false
-- CLIENT_ORIGIN=http://localhost:5173
-- STEGO_SERVICE_URL=http://127.0.0.1:5001
-- FERNET_KEY=base64_fernet_key  (must MATCH stego-service)
-
-Stego Service (`backend/stego-service/.env`)
-- FERNET_KEY=base64_fernet_key  (must MATCH Node)
-- PORT=5001  (optional; app defaults to 5001)
-
-Frontend (`frontend/.env`)
-- VITE_API_URL=http://localhost:4000
 
 ## Data Flow
 

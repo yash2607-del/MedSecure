@@ -11,6 +11,10 @@ const Encrypt = () => {
   const [recipient, setRecipient] = useState("");
   const [data, setData] = useState("");
   const [loading, setLoading] = useState(false);
+  const [downloadHref, setDownloadHref] = useState(null);
+  const [downloadName, setDownloadName] = useState("message.enc");
+  const [previewMime, setPreviewMime] = useState("application/octet-stream");
+  const [monoCipher, setMonoCipher] = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -18,9 +22,24 @@ const Encrypt = () => {
     try {
       // Payload for encryption + send; backend now handles encryption (no file yet wired)
       const body = { recipient, patient_id: patientId, patient_name: patientName, data };
-  const res = await api.post("/messages/send", body);
+      const res = await api.post("/messages/send", body);
+      if (res?.data?.id) {
+        if (res.data.mono_cipher) setMonoCipher(res.data.mono_cipher);
+        try {
+          const fileRes = await api.get(`/messages/${res.data.id}/file`, { responseType: 'blob' });
+          const blob = new Blob([fileRes.data], { type: fileRes.headers['content-type'] || 'application/octet-stream' });
+          const url = URL.createObjectURL(blob);
+          setDownloadHref(url);
+          const disposition = fileRes.headers['content-disposition'] || '';
+          const match = disposition.match(/filename="(.+?)"/i);
+          setDownloadName(match ? match[1] : 'message.enc');
+          setPreviewMime(blob.type || 'application/octet-stream');
+        } catch (e) {
+          // If file fetch fails, still proceed as message sent
+        }
+      }
       toast.success("Message encrypted and sent securely to " + recipient);
-      // Reset form
+      // Reset form (keep mono cipher shown)
       setFile(null);
       setPatientId("");
       setPatientName("");
@@ -174,6 +193,29 @@ const Encrypt = () => {
           </Form>
         </Card.Body>
       </Card>
+      {monoCipher && (
+        <Card className="shadow-sm border-0 mt-3">
+          <Card.Body className="p-4">
+            <h5 className="mb-2">Monoalphabetic Encrypted Text</h5>
+            <code className="d-block" style={{whiteSpace:'pre-wrap', wordBreak:'break-word'}}>{monoCipher}</code>
+          </Card.Body>
+        </Card>
+      )}
+      {downloadHref && (
+        <Card className="shadow-sm border-0 mt-3">
+          <Card.Body className="p-4 d-flex align-items-center gap-3">
+            <a download={downloadName} href={downloadHref} className="btn btn-outline-primary">
+              Download encrypted file
+            </a>
+            {previewMime.startsWith('image/') && (
+              <img alt="encrypted-preview" src={downloadHref} style={{ maxHeight: 120, borderRadius: 8 }} />
+            )}
+            {previewMime.startsWith('audio/') && (
+              <audio controls src={downloadHref} />
+            )}
+          </Card.Body>
+        </Card>
+      )}
       <ToastContainer position="top-right" autoClose={3000} />
     </div>
   );

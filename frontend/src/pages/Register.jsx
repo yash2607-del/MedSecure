@@ -6,6 +6,7 @@ import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
   const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
@@ -14,7 +15,7 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     try {
-  await api.post("/auth/register", { username, password });
+  await api.post("/auth/register", { username, email, password });
       toast.success("Registered successfully. Please login.");
       setTimeout(() => nav("/login"), 800);
     } catch (err) {
@@ -30,10 +31,10 @@ const Register = () => {
         <div className="auth-welcome-content">
           <h1>Welcome, Doctor</h1>
           <p>Streamlined and secure care</p>
-          <ul>
-            <li>Create tamper-proof patient records on-chain</li>
-            <li>View patient history with confidence</li>
-            <li>Build trust with verifiable data</li>
+          <ul className="feature-list">
+            <li>Encrypt patient data before sending</li>
+            <li>Deliver securely to another doctor</li>
+            <li>Audit every action for traceability</li>
           </ul>
         </div>
       </div>
@@ -41,6 +42,16 @@ const Register = () => {
         <div className="auth-form-content">
           <h3>Doctor Signup</h3>
           <Form onSubmit={submit}>
+            <Form.Group className="mb-3">
+              <Form.Label>EMAIL</Form.Label>
+              <Form.Control 
+                type="email"
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
+                required 
+                disabled={loading}
+              />
+            </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>USERNAME</Form.Label>
               <Form.Control 

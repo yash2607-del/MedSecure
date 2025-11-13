@@ -6,7 +6,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate, Link } from "react-router-dom";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-  await api.post("/auth/login", { username, password });
+  await api.post("/auth/login", { email, password });
       toast.success("Logged in successfully");
       setTimeout(() => nav("/dashboard"), 500);
     } catch (err) {
@@ -31,7 +31,7 @@ const Login = () => {
         <div className="auth-welcome-content">
           <h1>Welcome, Doctor</h1>
           <p>Secure steganography-based patient data exchange</p>
-          <ul>
+          <ul className="feature-list">
             <li>Hide patient info in images and audio files</li>
             <li>Send encrypted data to colleague doctors</li>
             <li>Track all activities with complete audit logs</li>
@@ -43,10 +43,11 @@ const Login = () => {
           <h3>Doctor Login</h3>
           <Form onSubmit={submit}>
             <Form.Group className="mb-3">
-              <Form.Label>USERNAME</Form.Label>
+              <Form.Label>EMAIL</Form.Label>
               <Form.Control 
-                value={username} 
-                onChange={e => setUsername(e.target.value)} 
+                type="email"
+                value={email} 
+                onChange={e => setEmail(e.target.value)} 
                 required 
                 disabled={loading}
               />
