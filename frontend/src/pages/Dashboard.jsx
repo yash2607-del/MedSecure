@@ -3,26 +3,33 @@ import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import Encrypt from "./Encrypt";
 import Decrypt from "./Decrypt";
 import Logs from "./Logs";
+import Sent from "./Sent";
 import Inbox from "./Inbox";
 import { Route, Routes, Link, NavLink } from "react-router-dom";
-import { Lock, Unlock, Inbox as InboxIcon, FileText, Home, Shield, Mail, Activity } from "lucide-react";
+import { Lock, Unlock, Inbox as InboxIcon, FileText, Home, Shield, Mail, Activity, Send, Key, Database } from "lucide-react";
 import { api } from "../lib/api";
 
 const Overview = () => {
-  const [stats, setStats] = useState({ totalMessages: 0, newMessages: 0 });
+  const [stats, setStats] = useState({ totalMessages: 0, newMessages: 0, sentMessages: 0 });
   const [displayName, setDisplayName] = useState('');
 
   useEffect(() => {
     const fetchStats = async () => {
       try {
         const me = await api.get('/auth/me');
-        const dn = me.data.user.displayName || me.data.user.username;
+        const raw = me.data.user.displayName || me.data.user.username || '';
+        const dn = raw ? raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '';
         setDisplayName(dn);
-        const res = await api.get('/messages/inbox?mine=true');
-        const messages = res.data.items || [];
+        const [inboxRes, sentRes] = await Promise.all([
+          api.get('/messages/inbox?mine=true'),
+          api.get('/messages/sent')
+        ]);
+        const messages = inboxRes.data.items || [];
+        const sent = sentRes.data.items || [];
         setStats({
           totalMessages: messages.length,
-          newMessages: messages.filter(m => !m.decrypted).length
+          newMessages: messages.filter(m => !m.decrypted).length,
+          sentMessages: sent.length
         });
       } catch (e) {
         console.error('Failed to fetch stats');
@@ -39,7 +46,7 @@ const Overview = () => {
             <Home size={32} />
           </div>
           <div>
-            <h2 className="mb-1">Welcome back, Dr. {displayName}</h2>
+            <h2 className="mb-1">Welcome Back, Dr. {displayName}</h2>
             <p className="text-muted mb-0">
               Secure steganography-based patient data exchange dashboard
             </p>
@@ -101,11 +108,11 @@ const Overview = () => {
             <Card.Body>
               <div className="d-flex justify-content-between align-items-start">
                 <div>
-                  <p className="stat-label">Encryption</p>
-                  <h2 className="stat-value">LSB</h2>
+                  <p className="stat-label">Sent Messages</p>
+                  <h2 className="stat-value">{stats.sentMessages}</h2>
                 </div>
                 <div className="stat-icon stat-icon-warning">
-                  <Activity size={24} />
+                  <Send size={24} />
                 </div>
               </div>
             </Card.Body>
@@ -120,15 +127,16 @@ const Overview = () => {
               <h4 className="mb-3">Quick Actions</h4>
               <p className="text-muted mb-4">
                 Secure, steganography-powered sharing of patient data within your hospital network. 
-                Encrypt confidential information into images (PNG/JPEG) or audio (WAV) files, send to colleague doctors, and decrypt on receipt.
+                Encrypt confidential information into PNG images or WAV audio files, send to colleague doctors, and decrypt on receipt.
               </p>
               
               <div className="quick-actions">
                 <Button 
+                  variant="outline-primary"
                   as={Link} 
                   to="/dashboard/encrypt" 
                   size="lg"
-                  className="action-btn action-btn-primary me-3 mb-3"
+                  className="action-btn me-3 mb-3"
                 >
                   <Lock size={20} className="me-2" />
                   Encrypt & Send Message
@@ -138,10 +146,20 @@ const Overview = () => {
                   as={Link} 
                   to="/dashboard/inbox"
                   size="lg"
-                  className="action-btn mb-3"
+                  className="action-btn me-3 mb-3"
                 >
                   <InboxIcon size={20} className="me-2" />
                   View Inbox ({stats.newMessages} new)
+                </Button>
+                <Button 
+                  variant="outline-primary" 
+                  as={Link} 
+                  to="/dashboard/decrypt"
+                  size="lg"
+                  className="action-btn mb-3"
+                >
+                  <Unlock size={20} className="me-2" />
+                  Decrypt Message
                 </Button>
               </div>
             </Card.Body>
@@ -157,28 +175,35 @@ const Overview = () => {
                   <Shield size={18} className="me-2 text-primary" />
                   <div>
                     <strong>LSB Steganography</strong>
-                    <p className="mb-0 small text-muted">Hide data in image/audio files</p>
+                    <p className="mb-0 small text-muted">Hide encrypted data in PNG/WAV files</p>
                   </div>
                 </li>
                 <li>
                   <Lock size={18} className="me-2 text-primary" />
                   <div>
                     <strong>Fernet Encryption</strong>
-                    <p className="mb-0 small text-muted">Military-grade data encryption</p>
+                    <p className="mb-0 small text-muted">AES-128 symmetric encryption for payloads</p>
+                  </div>
+                </li>
+                <li>
+                  <Key size={18} className="me-2 text-primary" />
+                  <div>
+                    <strong>Vigenère Cipher</strong>
+                    <p className="mb-0 small text-muted">Enhanced display cipher for message logs</p>
                   </div>
                 </li>
                 <li>
                   <Activity size={18} className="me-2 text-primary" />
                   <div>
-                    <strong>Real-time Notifications</strong>
-                    <p className="mb-0 small text-muted">Instant message alerts via WebSocket</p>
+                    <strong>JWT Authentication</strong>
+                    <p className="mb-0 small text-muted">Secure session management with tokens</p>
                   </div>
                 </li>
                 <li>
-                  <FileText size={18} className="me-2 text-primary" />
+                  <Database size={18} className="me-2 text-primary" />
                   <div>
-                    <strong>Complete Audit Trail</strong>
-                    <p className="mb-0 small text-muted">Track all encryption activities</p>
+                    <strong> Audit Logs</strong>
+                    <p className="mb-0 small text-muted">Complete trail of all security events</p>
                   </div>
                 </li>
               </ul>
@@ -225,6 +250,11 @@ const Dashboard = () => {
               <InboxIcon /> Inbox
             </NavLink>
           </li>
+          <li className="sidebar-nav-item">
+            <NavLink to="/dashboard/sent" className="sidebar-nav-link">
+              <FileText /> Sent
+            </NavLink>
+          </li>
           {role === "admin" && (
             <li className="sidebar-nav-item">
               <NavLink to="/dashboard/logs" className="sidebar-nav-link">
@@ -241,6 +271,7 @@ const Dashboard = () => {
             <Route path="encrypt" element={<Encrypt />} />
             <Route path="decrypt" element={<Decrypt />} />
             <Route path="inbox" element={<Inbox />} />
+            <Route path="sent" element={<Sent />} />
             <Route path="logs" element={<Logs />} />
           </Routes>
         </Container>

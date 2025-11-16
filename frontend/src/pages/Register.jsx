@@ -3,13 +3,39 @@ import { api } from "../lib/api";
 import { Form, Button, Spinner } from "react-bootstrap";
 import { toast, ToastContainer } from "react-toastify";
 import { useNavigate, Link } from "react-router-dom";
+import { Eye, EyeOff } from "lucide-react";
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
+
+  const calculatePasswordStrength = (pwd) => {
+    if (!pwd) {
+      setPasswordStrength("");
+      return;
+    }
+    let strength = 0;
+    if (pwd.length >= 8) strength++;
+    if (pwd.length >= 12) strength++;
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) strength++;
+    if (/\d/.test(pwd)) strength++;
+    if (/[^a-zA-Z0-9]/.test(pwd)) strength++;
+
+    if (strength <= 2) setPasswordStrength("weak");
+    else if (strength <= 3) setPasswordStrength("medium");
+    else setPasswordStrength("strong");
+  };
+
+  const handlePasswordChange = (e) => {
+    const pwd = e.target.value;
+    setPassword(pwd);
+    calculatePasswordStrength(pwd);
+  };
 
   const submit = async (e) => {
     e.preventDefault();
@@ -63,13 +89,59 @@ const Register = () => {
             </Form.Group>
             <Form.Group className="mb-4">
               <Form.Label>PASSWORD</Form.Label>
-              <Form.Control 
-                type="password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                required 
-                disabled={loading}
-              />
+              <div style={{ position: 'relative' }}>
+                <Form.Control 
+                  type={showPassword ? "text" : "password"} 
+                  value={password} 
+                  onChange={handlePasswordChange} 
+                  required 
+                  disabled={loading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#6c757d'
+                  }}
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
+              <div className="password-requirements mt-2">
+                <small className="text-muted d-block mb-1">Password must contain:</small>
+                <small className={`requirement-item ${password.length >= 8 ? 'requirement-met' : 'requirement-unmet'}`}>
+                  • At least 8 characters
+                </small>
+                <small className={`requirement-item ${/[A-Z]/.test(password) ? 'requirement-met' : 'requirement-unmet'}`}>
+                  • One uppercase letter
+                </small>
+                <small className={`requirement-item ${/[a-z]/.test(password) ? 'requirement-met' : 'requirement-unmet'}`}>
+                  • One lowercase letter
+                </small>
+                <small className={`requirement-item ${/\d/.test(password) ? 'requirement-met' : 'requirement-unmet'}`}>
+                  • One number
+                </small>
+                <small className={`requirement-item ${/[^a-zA-Z0-9]/.test(password) ? 'requirement-met' : 'requirement-unmet'}`}>
+                  • One special character (!@#$%^&*)
+                </small>
+              </div>
+              {password && (
+                <div className="mt-2">
+                  <div className="password-strength-bar">
+                    <div className={`password-strength-fill password-strength-${passwordStrength}`}></div>
+                  </div>
+                  <small className={`password-strength-text text-${passwordStrength === 'weak' ? 'danger' : passwordStrength === 'medium' ? 'warning' : 'success'}`}>
+                    Password strength: {passwordStrength}
+                  </small>
+                </div>
+              )}
             </Form.Group>
             <Button type="submit" className="w-100" disabled={loading}>
               {loading ? <Spinner animation="border" size="sm" /> : "Register"}

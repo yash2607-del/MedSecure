@@ -43,7 +43,7 @@ const Navbar = () => {
                 aria-expanded="false"
               >
                 <User size={20} className="me-2" />
-                <span>{session.username}</span>
+                <span>{session.username ? session.username.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : ''}</span>
               </button>
               <ul className="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                 <li>

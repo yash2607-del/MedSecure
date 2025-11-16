@@ -16,7 +16,7 @@ const copyJson = (obj) => {
 
 const PayloadModal = ({ show, onHide, data }) => {
   const payload = data || {};
-  const created = payload.created_at ? new Date(payload.created_at).toLocaleString() : "-";
+  // created_at removed from details per request
 
   const hasError = !!payload.error;
   const isRawOnly = !!payload.raw && !payload.patient_id && !payload.patient_name;
@@ -42,11 +42,10 @@ const PayloadModal = ({ show, onHide, data }) => {
               <RowItem label="Patient ID" value={payload.patient_id} />
               <RowItem label="Patient Name" value={payload.patient_name} />
               <RowItem label="Message" value={payload.message} />
-              <RowItem label="Sender" value={payload.sender} />
+              <RowItem label="Sender" value={payload.sender ? payload.sender.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : payload.sender} />
               {payload.recipient !== undefined && (
-                <RowItem label="Recipient" value={payload.recipient} />
+                <RowItem label="Recipient" value={payload.recipient ? payload.recipient.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : payload.recipient} />
               )}
-              <RowItem label="Created At" value={created} />
             </tbody>
           </Table>
         )}

@@ -2,19 +2,23 @@ import React, { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { Card, Table, Button, Alert } from "react-bootstrap";
 import { toast } from "react-toastify";
-import { Inbox as InboxIcon, Mail, MailOpen, RefreshCw, ExternalLink, Unlock } from "lucide-react";
-import PayloadModal from "../components/PayloadModal";
+import {
+  Inbox as InboxIcon,
+  Mail,
+  MailOpen,
+  RefreshCw,
+  ExternalLink,
+} from "lucide-react";
 
 const Inbox = () => {
   const [items, setItems] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [payload, setPayload] = useState(null);
+  // Decrypt now happens only via Decrypt page; remove modal state
   const [loading, setLoading] = useState(false);
 
   const fetchInbox = async () => {
     setLoading(true);
     try {
-  const res = await api.get("/messages/inbox?mine=true");
+      const res = await api.get("/messages/inbox?mine=true");
       setItems(res.data.items || []);
     } catch (e) {
       toast.error(e.response?.data?.message || "Failed to fetch inbox");
@@ -27,19 +31,57 @@ const Inbox = () => {
     fetchInbox();
   }, []);
 
-  const handleDecrypt = async (messageId) => {
-    try {
-      const res = await api.post("/messages/decrypt/" + messageId);
-      setPayload(res.data.payload);
-      setOpen(true);
-      toast.success("Message decrypted successfully!");
-      fetchInbox();
-    } catch (e) {
-      toast.error(e.response?.data?.message || "Failed to decrypt");
+  // Removed inline decrypt action; users should use the Decrypt page
+
+  const newMessages = items.filter((m) => !m.decrypted).length;
+
+  const capSender = (s) => {
+    if (!s) return "-";
+    const str = String(s);
+    if (str.includes("@")) {
+      const local = str.split("@")[0];
+      return local.charAt(0).toUpperCase() + local.slice(1);
     }
+    return str.charAt(0).toUpperCase() + str.slice(1);
   };
 
-  const newMessages = items.filter(m => !m.decrypted).length;
+  /*** FIXED DOWNLOAD FUNCTION ***/
+  const downloadFrom = async (urlPath) => {
+    try {
+      const fileRes = await api.get(urlPath, { responseType: "blob" });
+
+      const mime =
+        fileRes.headers["content-type"] || "application/octet-stream";
+
+      // Extract filename from backend header if possible
+      const cd = fileRes.headers["content-disposition"] || "";
+      const match = cd.match(/filename="(.+?)"/i);
+      let filename = match ? match[1] : "file";
+
+      // If backend didn't provide filename → infer from MIME
+      if (!match) {
+        if (mime.includes("png")) filename += ".png";
+        else if (mime.includes("jpeg") || mime.includes("jpg"))
+          filename += ".jpg";
+        else if (mime.includes("wav")) filename += ".wav";
+        else filename += ".bin"; // last fallback
+      }
+
+      const blob = new Blob([fileRes.data], { type: mime });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      setTimeout(() => URL.revokeObjectURL(url), 1500);
+    } catch (e) {
+      toast.error("Download unavailable");
+    }
+  };
 
   return (
     <div className="inbox-page">
@@ -56,8 +98,8 @@ const Inbox = () => {
               </p>
             </div>
           </div>
-          <Button 
-            variant="outline-primary" 
+          <Button
+            variant="outline-primary"
             onClick={fetchInbox}
             disabled={loading}
             className="d-flex align-items-center"
@@ -70,7 +112,10 @@ const Inbox = () => {
 
       {newMessages > 0 && (
         <Alert variant="info" className="mb-4">
-          <strong>You have {newMessages} new message{newMessages > 1 ? 's' : ''}!</strong> Click decrypt to view the patient data.
+          <strong>
+            You have {newMessages} new message{newMessages > 1 ? "s" : ""}!
+          </strong>{" "}
+          Click decrypt to view the patient data.
         </Alert>
       )}
 
@@ -80,7 +125,9 @@ const Inbox = () => {
             <div className="text-center py-5">
               <Mail size={64} className="text-muted mb-3" />
               <h5 className="text-muted">No messages yet</h5>
-              <p className="text-muted">Encrypted messages from other doctors will appear here</p>
+              <p className="text-muted">
+                Encrypted messages from other doctors will appear here
+              </p>
             </div>
           ) : (
             <div className="table-responsive">
@@ -90,15 +137,19 @@ const Inbox = () => {
                     <th>Status</th>
                     <th>From Doctor</th>
                     <th>Patient ID</th>
-                    <th>Encrypted Text</th>
-                    <th>Encrypted File</th>
+                    <th>Patient Name</th>
+                    <th>Stego File</th>
+                    <th>Original File</th>
                     <th>Received</th>
-                    <th className="text-end">Action</th>
+                    {/* Action column removed: decrypt happens via Decrypt page */}
                   </tr>
                 </thead>
                 <tbody>
                   {items.map((m) => (
-                    <tr key={m._id} className={!m.decrypted ? "unread-message" : ""}>
+                    <tr
+                      key={m._id}
+                      className={!m.decrypted ? "unread-message" : ""}
+                    >
                       <td>
                         {m.decrypted ? (
                           <MailOpen size={20} className="text-muted" />
@@ -107,49 +158,50 @@ const Inbox = () => {
                         )}
                       </td>
                       <td>
-                        <strong>{m.senderUsername || m.sender}</strong>
+                        <strong>Dr. {m.senderUsername ? (m.senderUsername.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')) : capSender(m.sender)}</strong>
                       </td>
                       <td>
-                        <code className="patient-id-badge">{m.patient_id || "-"}</code>
+                        <code className="patient-id-badge">
+                          {m.patient_id || "-"}
+                        </code>
                       </td>
+                      <td>{m.patient_name || "-"}</td>
+
+                      {/* STEGO DOWNLOAD */}
                       <td>
-                        <code className="text-muted small">{(m.cipher_text || '').slice(0, 40)}{(m.cipher_text || '').length>40?'…':''}</code>
-                      </td>
-                      <td>
-                        <Button size="sm" variant="outline-primary" onClick={async ()=>{
-                          try {
-                            const fileRes = await api.get(`/messages/${m._id}/file`, { responseType: 'blob' });
-                            const blob = new Blob([fileRes.data], { type: fileRes.headers['content-type'] || 'application/octet-stream' });
-                            const url = URL.createObjectURL(blob);
-                            const disposition = fileRes.headers['content-disposition'] || '';
-                            const match = disposition.match(/filename="(.+?)"/i);
-                            const name = match ? match[1] : 'message.enc';
-                            const a = document.createElement('a');
-                            a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-                            setTimeout(()=> URL.revokeObjectURL(url), 1500);
-                          } catch (e) {
-                            toast.error('No encrypted file available');
+                        <Button
+                          size="sm"
+                          variant="outline-primary"
+                          disabled={!m.has_stego}
+                          onClick={() =>
+                            downloadFrom(`/messages/${m._id}/file/stego`)
                           }
-                        }}>
+                        >
                           <ExternalLink size={16} className="me-1" /> Download
                         </Button>
                       </td>
+
+                      {/* ORIGINAL DOWNLOAD */}
+                      <td>
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          disabled={!m.has_original}
+                          onClick={() =>
+                            downloadFrom(`/messages/${m._id}/file/original`)
+                          }
+                        >
+                          <ExternalLink size={16} className="me-1" /> Download
+                        </Button>
+                      </td>
+
                       <td>
                         <small className="text-muted">
                           {new Date(m.createdAt || m.created_at).toLocaleString()}
                         </small>
                       </td>
-                      <td className="text-end">
-                        <Button 
-                          size="sm" 
-                          variant={m.decrypted ? "outline-secondary" : "primary"}
-                          onClick={() => handleDecrypt(m._id)}
-                          className="decrypt-btn"
-                        >
-                          <Unlock size={16} className="me-1" />
-                          {m.decrypted ? "View Again" : "Decrypt"}
-                        </Button>
-                      </td>
+
+                      {/* Action cell removed */}
                     </tr>
                   ))}
                 </tbody>
@@ -159,7 +211,7 @@ const Inbox = () => {
         </Card.Body>
       </Card>
 
-      <PayloadModal show={open} onHide={() => setOpen(false)} data={payload} />
+      {/* PayloadModal removed */}
     </div>
   );
 };

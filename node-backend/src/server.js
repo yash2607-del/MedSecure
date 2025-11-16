@@ -9,6 +9,7 @@ import mongoose from 'mongoose';
 import authRoutes from './routes/auth.js';
 import messageRoutes from './routes/messages.js';
 import auditRoutes from './routes/audit.js';
+import debugRoutes from './routes/debug.js';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/auth', authRoutes);
 app.use('/messages', messageRoutes);
 app.use('/audit', auditRoutes);
+app.use('/debug', debugRoutes);
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Node backend running on port ${PORT}`));

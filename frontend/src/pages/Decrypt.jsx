@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import { api } from "../lib/api";
 import { Card, Form, Button, Spinner, Alert } from "react-bootstrap";
 import { toast, ToastContainer } from "react-toastify";
 import { Unlock, FileSearch, Upload } from "lucide-react";
@@ -18,15 +18,69 @@ const Decrypt = () => {
     setFileName(selectedFile?.name || "");
   };
 
+  const fileToBase64 = (file) =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const bytes = new Uint8Array(reader.result);
+          let binary = "";
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          resolve(btoa(binary));
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = (err) => reject(err);
+      reader.readAsArrayBuffer(file);
+    });
+
   const submit = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      // Placeholder: future direct file decode endpoint. For now user should decrypt via inbox.
-      toast.info('Direct file decryption not yet wired to backend');
-    } finally {
-      setLoading(false);
+    if (!file) {
+      toast.error("Please select a file");
+      return;
     }
+
+    setLoading(true);
+
+    try {
+      const b64 = await fileToBase64(file);
+      const mime = file.type || "application/octet-stream";
+
+      const res = await api.post("/messages/extract", {
+        file: { b64, mime, filename: file.name },
+      });
+
+      // Backend returns: { patient_id, patient_name, decrypted_message, payload, cipher_text }
+      const decrypted = res.data?.payload;
+      if (!decrypted) {
+        toast.error(res.data?.message || "Could not read hidden data");
+        return;
+      }
+
+      // Normalize for modal
+      const modalData = {
+        patient_id: decrypted.patient_id || res.data.patient_id,
+        patient_name: decrypted.patient_name || res.data.patient_name,
+        message: decrypted.message || res.data.decrypted_message,
+        sender: decrypted.sender,
+        recipient: decrypted.recipient,
+        created_at: decrypted.created_at,
+      };
+
+      setPayload(modalData);
+      setOpen(true);
+      toast.success("Decryption successful!");
+    } catch (e) {
+      console.error(e);
+      const msg = e.response?.data?.error || "Failed to extract data";
+      toast.error(msg);
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -38,31 +92,29 @@ const Decrypt = () => {
           </div>
           <div>
             <h2 className="mb-1">Retrieve & Decrypt Patient Data</h2>
-            <p className="text-muted mb-0">Extract hidden patient information from steganographic files</p>
+            <p className="text-muted mb-0">
+              Extract hidden patient information from steganographic files
+            </p>
           </div>
         </div>
       </div>
 
       <Card className="shadow-sm border-0">
         <Card.Body className="p-4">
-          <Alert variant="info" className="mb-4">
-            <strong>How it works:</strong> Upload a steganographic file to extract and decrypt the hidden patient data using LSB steganography and Fernet decryption.
-          </Alert>
-
           <Form onSubmit={submit}>
             <div className="upload-area mb-4">
               <Form.Group>
                 <Form.Label className="form-label-custom">
                   <FileSearch size={18} className="me-2" />
-                  Select Steganographic File (future feature)
+                  Select Steganographic File
                 </Form.Label>
-                
+
                 <div className="file-upload-wrapper">
-                  <Form.Control 
-                    type="file" 
-                    accept="image/*,audio/*"
+                  <Form.Control
+                    type="file"
+                    accept="image/png, image/jpeg, image/jpg, audio/wav"
                     onChange={handleFileChange}
-                    required 
+                    required
                     className="form-control-custom file-input"
                     id="fileInput"
                   />
@@ -71,29 +123,37 @@ const Decrypt = () => {
                       <Upload size={40} className="upload-icon mb-3" />
                       {fileName ? (
                         <>
-                          <p className="mb-1 fw-bold text-primary">{fileName}</p>
-                          <p className="text-muted small">Click to change file</p>
+                          <p className="mb-1 fw-bold text-primary">
+                            {fileName}
+                          </p>
+                          <p className="text-muted small">
+                            Click to change file
+                          </p>
                         </>
                       ) : (
                         <>
-                          <p className="mb-1 fw-bold">Click to upload or drag and drop</p>
-                          <p className="text-muted small">PNG, JPEG, JPG, or WAV files</p>
+                          <p className="mb-1 fw-bold">
+                            Click to upload or drag and drop
+                          </p>
+                          <p className="text-muted small">
+                            PNG or WAV files
+                          </p>
                         </>
                       )}
                     </div>
                   </label>
                 </div>
-                
+
                 <Form.Text className="text-muted">
-                  Upcoming: decode embedded payload locally or via Python service
+                  PNG images or WAV audio files are supported
                 </Form.Text>
               </Form.Group>
             </div>
 
             <div className="d-grid">
-              <Button 
-                type="submit" 
-                disabled={loading || !file} 
+              <Button
+                type="submit"
+                disabled={loading || !file}
                 size="lg"
                 className="btn-decrypt"
               >
@@ -114,7 +174,8 @@ const Decrypt = () => {
 
           {payload && (
             <Alert variant="success" className="mt-4">
-              <strong>Success!</strong> Patient data has been decrypted. View details in the popup window.
+              <strong>Success!</strong> Patient data has been decrypted. View
+              details in the popup window.
             </Alert>
           )}
         </Card.Body>

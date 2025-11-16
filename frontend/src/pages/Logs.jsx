@@ -27,7 +27,7 @@ const Logs = () => {
           {logs.map(l => (
             <tr key={l._id}>
               <td>{new Date(l.created_at || l.timestamp).toLocaleString()}</td>
-              <td>{l.username}</td>
+              <td>{l.username ? l.username.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '-'}</td>
               <td>{l.action}</td>
               <td>{l.patient_id || "-"}</td>
               <td>{typeof l.details === 'object' ? JSON.stringify(l.details) : (l.details || l.file_url || "-")}</td>
