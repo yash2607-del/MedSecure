@@ -26,7 +26,7 @@ def health():
     return jsonify({"ok": True})
 
 
-########### BINARY HELPERS ###########
+#BINARY HELPERS #
 
 def to_bits(data: bytes):
     return [int(bit) for byte in data for bit in f"{byte:08b}"]
@@ -52,11 +52,10 @@ def parse_header(b: bytes):
     return int.from_bytes(b[:4], "big")
 
 
-########### IMAGE STEGANOGRAPHY ###########
+#IMAGE STEGANOGRAPHY#
 
 def embed_in_image(img_bytes: bytes, token: str):
     im = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-    # Always use PNG to preserve LSB integrity (JPEG is lossy)
     fmt = "PNG"
     arr = np.array(im)
     flat = arr.reshape(-1, 3)  # RGB channels only
@@ -90,7 +89,6 @@ def extract_from_image(img_bytes: bytes):
     im = Image.open(io.BytesIO(img_bytes)).convert("RGB")
     arr = np.array(im).reshape(-1, 3)
 
-    # 4-byte header = 32 bits per byte = 96 bits (3 bits per pixel)
     header_bits = []
     for i in range(32):
         for ch in range(3):
@@ -112,8 +110,7 @@ def extract_from_image(img_bytes: bytes):
     data = from_bits(bits)
     return data[4:4+msg_len].decode()
 
-
-########### AUDIO STEG ###########
+#AUDIO STEG#
 
 def embed_in_wav(wav_bytes: bytes, token: str):
     data, rate = sf.read(io.BytesIO(wav_bytes), dtype="int16")
@@ -146,7 +143,7 @@ def extract_from_wav(wav_bytes: bytes):
     return full[4:4+n].decode()
 
 
-########### API ROUTES ###########
+#API ROUTES#
 
 @app.post("/encrypt")
 def encrypt_payload():

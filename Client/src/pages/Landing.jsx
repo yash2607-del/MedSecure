@@ -73,9 +73,9 @@ const Landing = () => {
                   <div className="feature-icon mx-auto mb-3">
                     <Key size={40} />
                   </div>
-                  <h5 className="feature-title">Vigenère Cipher</h5>
+                  <h5 className="feature-title">Authenticated Encryption</h5>
                   <p className="feature-text">
-                    Enhanced polyalphabetic cipher for message display logs, providing an additional security layer for sensitive text.
+                    Fernet tokens add integrity protection (HMAC) alongside AES encryption—no legacy ciphers, just modern cryptography.
                   </p>
                 </Card.Body>
               </Card>
@@ -132,7 +132,7 @@ const Landing = () => {
               <div className="text-center">
                 <div className="step-number mx-auto mb-3" style={{width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 'bold'}}>1</div>
                 <h5 className="text-white">Upload & Encrypt</h5>
-                <p className="text-white">Select a PNG/WAV cover file and enter patient data. Data is encrypted with Fernet and Vigenère cipher.</p>
+                <p className="text-white">Select a PNG/WAV cover file and enter patient data. Data is encrypted using Fernet (AES + HMAC) before embedding.</p>
               </div>
             </Col>
             <Col md={3}>

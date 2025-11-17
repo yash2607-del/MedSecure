@@ -3,6 +3,7 @@ import { Container, Card, Button, Row, Col } from "react-bootstrap";
 import Encrypt from "./Encrypt";
 import Decrypt from "./Decrypt";
 import Logs from "./Logs";
+import Profile from "./Profile";
 import Sent from "./Sent";
 import Inbox from "./Inbox";
 import { Route, Routes, Link, NavLink } from "react-router-dom";
@@ -16,8 +17,8 @@ const Overview = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const me = await api.get('/auth/me');
-        const raw = me.data.user.displayName || me.data.user.username || '';
+        const me = await api.get('/auth/profile');
+        const raw = me.data.user.username || '';
         const dn = raw ? raw.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') : '';
         setDisplayName(dn);
         const [inboxRes, sentRes] = await Promise.all([
@@ -188,8 +189,8 @@ const Overview = () => {
                 <li>
                   <Key size={18} className="me-2 text-primary" />
                   <div>
-                    <strong>Vigenère Cipher</strong>
-                    <p className="mb-0 small text-muted">Enhanced display cipher for message logs</p>
+                    <strong>Authenticated Encryption</strong>
+                    <p className="mb-0 small text-muted">Fernet provides confidentiality & integrity (HMAC)</p>
                   </div>
                 </li>
                 <li>
@@ -220,7 +221,7 @@ const Dashboard = () => {
   useEffect(() => {
     (async () => {
       try {
-        const me = await api.get('/auth/me');
+        const me = await api.get('/auth/profile');
         setRole(me.data.user.role);
       } catch {}
     })();
@@ -273,6 +274,7 @@ const Dashboard = () => {
             <Route path="inbox" element={<Inbox />} />
             <Route path="sent" element={<Sent />} />
             <Route path="logs" element={<Logs />} />
+            <Route path="profile" element={<Profile />} />
           </Routes>
         </Container>
       </main>

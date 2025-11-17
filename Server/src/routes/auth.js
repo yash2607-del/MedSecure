@@ -69,4 +69,77 @@ router.get('/me', authMiddleware, (req, res) => {
   res.json({ user: { username: req.user.sub, email: req.user.email, role: req.user.role } });
 });
 
+// Fetch full profile for the logged-in user
+router.get('/profile', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findOne({ username: req.user.sub }).select('username email role createdAt');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    return res.json({
+      user: {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to load profile' });
+  }
+});
+
+// Update profile fields: username, email
+router.put('/profile', authMiddleware, async (req, res) => {
+  try {
+    const { username, email } = req.body || {};
+    const user = await User.findOne({ username: req.user.sub });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const oldUsername = user.username;
+
+    // Username uniqueness check if changed
+    if (typeof username === 'string' && username.trim() && username !== user.username) {
+      const trimmed = username.trim();
+      if (trimmed.length < 3) return res.status(400).json({ error: 'Username must be at least 3 characters' });
+      const exists = await User.findOne({ username: trimmed });
+      if (exists) return res.status(409).json({ error: 'Username already taken' });
+      user.username = trimmed;
+    }
+
+    // Email uniqueness check if changed
+    if (typeof email === 'string' && email.toLowerCase() !== (user.email || '').toLowerCase()) {
+      const exists = await User.findOne({ email: email.toLowerCase() });
+      if (exists) return res.status(409).json({ error: 'Email already in use' });
+      user.email = email.toLowerCase();
+    }
+
+    await user.save();
+    await AuditLog.create({ username: user.username, action: 'UPDATE_PROFILE', details: `Changed from ${oldUsername}` }).catch(() => {});
+
+    // Issue new token if username changed
+    let newToken = null;
+    if (user.username !== oldUsername) {
+      newToken = signToken(user.username, user.email, user.role);
+      res.cookie(process.env.COOKIE_NAME || 'auth_token', newToken, {
+        httpOnly: true,
+        secure: process.env.COOKIE_SECURE === 'true',
+        sameSite: 'Strict',
+        maxAge: 8 * 60 * 60 * 1000
+      });
+    }
+
+    return res.json({
+      ok: true,
+      user: {
+        username: user.username,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt
+      },
+      tokenRefreshed: !!newToken
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Failed to update profile' });
+  }
+});
+
 export default router;
