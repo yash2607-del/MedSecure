@@ -4,9 +4,10 @@ Secure medical data exchange using steganography and encryption. Doctors can emb
 
 ## Tech Stack
 
-- Backend: Node.js, Express, MongoDB (Mongoose), JWT (cookie-based), Helmet, CORS, Cookie-Parser
+- Backend: Node.js, Express, JWT
 - Stego Service: Python, Flask, cryptography (Fernet)
-- Frontend: React, Vite, React Router, Axios, React-Bootstrap, Toast notifications
+- Frontend: React, React-Bootstrap
+- Database: MongoDB, Cloudinary
 
 ## Core Features
 
