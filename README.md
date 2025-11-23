@@ -24,26 +24,24 @@ Secure medical data exchange using steganography and encryption. Doctors can emb
 Prerequisites: Node.js, Python, and MongoDB connection (Atlas)
 
 1) Backend API (Node)
-- Path: `backend/node`
-- Create `.env` (see Env files below)
-- Install and init DB:
+- Path: `Server`
+- Create `.env` 
+- Install and run
   - npm install
-  - npm run init:db
-- Start API:
   - npm run dev
 
+
 2) Stego Service (Python)
-- Path: `backend/stego-service`
-- Create `.env` (see Env files below) and ensure FERNET_KEY matches Node
+- Path: `/Encryption`
+- Create `.env` 
 - Create venv and install:
   - python -m venv venv
-  - venv\Scripts\activate (Windows) or source venv/bin/activate (macOS/Linux)
   - pip install -r requirements.txt
-- Start service (defaults to http://127.0.0.1:5001):
+- Start encryption
   - python app.py
 
 3) Frontend (React)
-- Path: `frontend`
+- Path: `Client`
 - Create `.env` (see Env files below)
 - Install and run:
   - npm install
