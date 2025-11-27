@@ -1,10 +1,10 @@
 # MedSecure
 
-Secure medical data exchange using steganography and encryption. Doctors can embed encrypted patient data inside image/audio files and share them safely within a hospital network.
+Secure medical data exchange using steganography and encryption. Doctors can embed encrypted patient data inside image/audio files and share them safely within a hospital network to other doctor.
 
 ## Tech Stack
 
-- Backend: Node.js, Express, JWT
+- Backend: Node, Express, JWT
 - Stego Service: Python, Flask, cryptography (Fernet)
 - Frontend: React, React-Bootstrap
 - Database: MongoDB, Cloudinary
@@ -66,12 +66,12 @@ Doctor-to-doctor journey (what happens when a doctor sends a secure message to a
 - Sees a new item in Inbox with sender and timestamp
 - Clicks Decrypt to view the patient details in a structured modal
 
-4) 🧾 Audit Trail
-- Registration, login, send, and decrypt actions are recorded for compliance
+4)  Audit Trail
+-  Send and decrypt actions are recorded for compliance.
 
 Quick view with table emoji formatting:
 
-| 🧑‍⚕️ From |  Step |  To |
+|  From |  Step |  To |
 |---|---|---|
 |  Doctor A | Uploads cover image/audio, enters patient data |  Platform |
 |  Platform | Encrypts, binds, logs audit |  Doctor B |
